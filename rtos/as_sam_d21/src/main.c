@@ -40,9 +40,13 @@ void tarefa_5(void);
 void tarefa_6(void);
 void tarefa_7(void);
 void tarefa_8(void);
-/* --- ADICIONADO --- */
 void tarefa_9(void);
 void tarefa_10(void);
+
+/* --- ADICIONADO PARA O EXEMPLO PERIÓDICO --- */
+void tarefa_periodica(void);
+void tarefa_cpu_intensiva(void);
+
 
 /*
  * Configuracao dos tamanhos das pilhas
@@ -55,9 +59,13 @@ void tarefa_10(void);
 #define TAM_PILHA_6         (TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_7         (TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_8         (TAM_MINIMO_PILHA + 24)
-/* --- ADICIONADO --- */
 #define TAM_PILHA_9         (TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_10        (TAM_MINIMO_PILHA + 24)
+
+/* --- ADICIONADO PARA O EXEMPLO PERIÓDICO --- */
+#define TAM_PILHA_PERIODICA (TAM_MINIMO_PILHA + 24)
+#define TAM_PILHA_INTENSIVA (TAM_MINIMO_PILHA + 24)
+
 #define TAM_PILHA_OCIOSA    (TAM_MINIMO_PILHA + 24)
 
 /*
@@ -71,9 +79,13 @@ uint32_t PILHA_TAREFA_5[TAM_PILHA_5];
 uint32_t PILHA_TAREFA_6[TAM_PILHA_6];
 uint32_t PILHA_TAREFA_7[TAM_PILHA_7];
 uint32_t PILHA_TAREFA_8[TAM_PILHA_8];
-/* --- ADICIONADO --- */
 uint32_t PILHA_TAREFA_9[TAM_PILHA_9];
 uint32_t PILHA_TAREFA_10[TAM_PILHA_10];
+
+/* --- ADICIONADO PARA O EXEMPLO PERIÓDICO --- */
+uint32_t PILHA_TAREFA_PERIODICA[TAM_PILHA_PERIODICA];
+uint32_t PILHA_TAREFA_INTENSIVA[TAM_PILHA_INTENSIVA];
+
 uint32_t PILHA_TAREFA_OCIOSA[TAM_PILHA_OCIOSA];
 
 /*
@@ -86,7 +98,6 @@ uint8_t buffer[TAM_BUFFER]; /* declaracao de um buffer (vetor) ou fila circular 
 semaforo_t SemaforoCheio = {0,0}; /* declaracao e inicializacao de um semaforo */
 semaforo_t SemaforoVazio = {TAM_BUFFER,0}; /* declaracao e inicializacao de um semaforo */
 
-/* --- ADICIONADO --- */
 /* Variaveis para o exemplo de mutex (tarefas 9 e 10) */
 volatile uint32_t recurso_compartilhado = 0; /* Variavel compartilhada entre tarefas */
 semaforo_t MutexRecurso = {1,0}; /* Mutex (semaforo binario com valor inicial 1) para proteger o recurso */
@@ -104,14 +115,26 @@ int main(void)
     /* Criacao das tarefas */
     /* Parametros: ponteiro, nome, ponteiro da pilha, tamanho da pilha, prioridade da tarefa */
     
-    CriaTarefa(tarefa_1, "Tarefa 1", PILHA_TAREFA_1, TAM_PILHA_1, 2);
+    /* Tarefas originais comentadas para focar no novo exemplo */
+    // CriaTarefa(tarefa_1, "Tarefa 1", PILHA_TAREFA_1, TAM_PILHA_1, 2);
+    // CriaTarefa(tarefa_2, "Tarefa 2", PILHA_TAREFA_2, TAM_PILHA_2, 1);
+    // CriaTarefa(tarefa_3, "Tarefa 3", PILHA_TAREFA_3, TAM_PILHA_3, 3);
+    // CriaTarefa(tarefa_4, "Tarefa 4", PILHA_TAREFA_4, TAM_PILHA_4, 4);
+    // CriaTarefa(tarefa_5, "Tarefa 5", PILHA_TAREFA_5, TAM_PILHA_5, 3);
+    // CriaTarefa(tarefa_6, "Tarefa 6", PILHA_TAREFA_6, TAM_PILHA_6, 4);
+    // CriaTarefa(tarefa_7, "Produtor", PILHA_TAREFA_7, TAM_PILHA_7, 3);
+    // CriaTarefa(tarefa_8, "Consumidor", PILHA_TAREFA_8, TAM_PILHA_8, 4);
+    // CriaTarefa(tarefa_9, "Tarefa 9", PILHA_TAREFA_9, TAM_PILHA_9, 3);
+    // CriaTarefa(tarefa_10, "Tarefa 10", PILHA_TAREFA_10, TAM_PILHA_10, 3);
     
-    CriaTarefa(tarefa_2, "Tarefa 2", PILHA_TAREFA_2, TAM_PILHA_2, 1);
-    
-    /* --- ADICIONADO --- */
-    /* Criacao das tarefas 9 e 10 para demonstrar mutex */
-    CriaTarefa(tarefa_9, "Tarefa 9", PILHA_TAREFA_9, TAM_PILHA_9, 3);
-    CriaTarefa(tarefa_10, "Tarefa 10", PILHA_TAREFA_10, TAM_PILHA_10, 3);
+    /* --- ADICIONADO PARA O EXEMPLO PERIÓDICO --- */
+    /*
+     * Para este teste, vamos criar duas tarefas:
+     * 1. tarefa_periodica: Alta prioridade (4), pisca um LED a cada 100ms.
+     * 2. tarefa_cpu_intensiva: Baixa prioridade (1), apenas executa um loop infinito para "gastar" CPU.
+     */
+    CriaTarefa(tarefa_periodica, "Tarefa Periodica", PILHA_TAREFA_PERIODICA, TAM_PILHA_PERIODICA, 4);
+    CriaTarefa(tarefa_cpu_intensiva, "Tarefa Intensiva", PILHA_TAREFA_INTENSIVA, TAM_PILHA_INTENSIVA, 1);
     
     /* Cria tarefa ociosa do sistema */
     CriaTarefa(tarefa_ociosa,"Tarefa ociosa", PILHA_TAREFA_OCIOSA, TAM_PILHA_OCIOSA, 0);
@@ -243,7 +266,7 @@ void tarefa_8(void) /* Consumidor */
         volatile uint8_t contador;
         
         do{
-            REG_ATOMICA_INICIO();         
+            REG_ATOMICA_INICIO();       
                 contador = SemaforoCheio.contador;          
             REG_ATOMICA_FIM();
             
@@ -265,7 +288,6 @@ void tarefa_8(void) /* Consumidor */
 
 /* tarefa 9 e 10 para demonstrar o conceito de 
 disputa por um recurso. */
-
 void tarefa_9(void)
 {
     for(;;)
@@ -292,5 +314,51 @@ void tarefa_10(void)
         SemaforoLibera(&MutexRecurso); 
         
         TarefaEspera(35); 
+    }
+}
+
+
+/* --- ADICIONADO: TAREFAS PARA COMPARATIVO COOPERATIVO VS. PREEMPTIVO --- */
+
+/**
+ * \brief Tarefa periódica que executa a cada 100ms.
+ *
+ * Esta tarefa tem prioridade alta. Ela alterna o estado de um LED e depois
+ * se suspende por 100 marcas de tempo (ticks), o que corresponde a 100ms
+ * se o tick do sistema for de 1ms.
+ */
+void tarefa_periodica(void)
+{
+    for(;;)
+    {
+        /* Alterna o estado do LED */
+        port_pin_toggle_output_level(LED_0_PIN);
+        
+        /*
+         * Suspende a tarefa por 100ms.
+         * Esta chamada é crucial: ela libera o processador para outras tarefas.
+         */
+        TarefaEspera(100);
+    }
+}
+
+/**
+ * \brief Tarefa de baixa prioridade que consome CPU intensivamente.
+ *
+ * Esta tarefa simplesmente entra em um loop infinito incrementando uma variável.
+ * ELA NÃO POSSUI CHAMADAS DE BLOQUEIO (como TarefaEspera), o que a torna
+ * uma tarefa que "não coopera" em um sistema cooperativo.
+ */
+void tarefa_cpu_intensiva(void)
+{
+    volatile uint32_t contador_intensivo = 0;
+    for(;;)
+    {
+        contador_intensivo++;
+        
+        /*
+         * Propositalmente, não há nenhuma chamada para TarefaEspera() ou 
+         * outra função de bloqueio do RTOS aqui.
+         */
     }
 }
